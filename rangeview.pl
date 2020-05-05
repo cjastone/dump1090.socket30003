@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 # ted.sluis@gmail.com
+# Modified: May 2020, Chris Stone (https://github.com/cjastone/)
 # Filename : rangeview.pl
 #
 #===============================================================================
@@ -207,7 +208,7 @@ if ($altitudeunit{'out'} =~ /feet/) {
 if ($help) {
 	print "\nThis $scriptname script creates location data 
 for a range/altitude view which can be displated in a modified 
-fork of dump1090-mutobility.
+fork of dump1090-mutability.
 
 The script creates two output files:
 rangeview.csv) A file with location data in csv format can be 
@@ -236,26 +237,30 @@ saved. The most remote locations per altitude zone will be
 written to a file as a track. 
 
 Default .kml output format:
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
+<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<kml xmlns=\"http://www.opengis.net/kml/2.2\">
   <Document>
-    <name>Paths</name>
-    <description>Example</description>
-<Style id="track-1">
+    <name>Range: [date/time]</name><Style id=\"track-1\">
       <LineStyle>
         <color>ff135beb</color>
-        <width>2</width>
+        <width>3</width>
+      </LineStyle>
+    </Style>
+	<Style id=\"fill-1\">
+      <LineStyle>
+        <color>000000</color>
+        <width>0</width>
       </LineStyle>
       <PolyStyle>
-        <color>ff135beb</color>
+        <color>55135beb</color>
       </PolyStyle>
     </Style>
     <Placemark>
-      <name>1</name>
-      <description>00000-  500</description>
+      <name>Layer x (outline)</name>
+      <description>x feet/meter - y feet/meter</description>
       <styleUrl>#track-1</styleUrl>
       <LineString>
-        <altitudeMode>absolute</altitudeMode>
+        <altitudeMode>clampToGround</altitudeMode>
         <coordinates>
 5.08865,52.00493,357
 5.08808,52.00616,357
@@ -268,6 +273,36 @@ Default .kml output format:
 5.08400,52.01463,357
 5.08345,52.01579,357
 5.08293,52.01683,357
+		</coordinates>
+      </LineString>
+    </Placemark>
+	<Placemark>
+	  <name>Layer x (fill)</name>
+	  <description>x feet/meter - y feet/meter</description>
+	  <styleUrl>#fill-1</styleUrl>
+	  <Polygon>
+	    <altitudeMode>clampToGround</altitudeMode>
+	    <outerBoundaryIs>
+		  <LinearRing>
+		    <coordinates>
+5.08865,52.00493,357
+5.08808,52.00616,357
+5.08722,52.00788,357
+5.08667,52.00914,357
+5.08604,52.01039,357
+5.08560,52.01125,357
+5.08518,52.01230,357
+5.08461,52.01335,357
+5.08400,52.01463,357
+5.08345,52.01579,357
+5.08293,52.01683,357
+		</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>	  
+    </Placemark>
+</Document>
+</kml>
   
 Optional CSV output format:  
 type,new_track,name,color,trackpoint,altitudezone,destination,hex_ident,Altitude(meter),latitude,longitude,date,time,angle,distance(kilometer)  
@@ -612,6 +647,7 @@ my $kml_filehandle;
 my $trackpoint=0;
 my $track=0;
 my $newtrack;
+my $datetime = localtime(); 
 if ($outputdatafile =~ /csv$/i) {
 	open($data_filehandle, '>',"$outputdatafile") or die "Unable to open '$outputdatafile'!\n";
 	print $data_filehandle "type,new_track,name,color,trackpoint,altitudezone,destination,hex_ident,Altitude($altitudeunit{'out'}),latitude,longitude,date,time,angle,distance($distanceunit{'out'})\n";
@@ -620,11 +656,13 @@ if ($outputdatafile =~ /csv$/i) {
 	print $kml_filehandle "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <kml xmlns=\"http://www.opengis.net/kml/2.2\">
   <Document>
-    <name>Paths</name>
-    <description>Example</description>\n";
+    <name>Range: $datetime</name>"
 }
 foreach my $altitude_zone (sort {$a<=>$b} keys %data) {
-	$track++;
+	my $coordslist;
+	my $firstloop = 1;
+	my $firstrow;
+		$track++;
         # convert altitude to feet:
         my $altitude_feet = $altitude_zone / $convertalt{'out'} * 3.2808399 / 1.8;
 	my $s = 85;
@@ -646,12 +684,13 @@ foreach my $altitude_zone (sort {$a<=>$b} keys %data) {
         if ($s < 5) {$s = 5;} elsif ($s > 95) {$s = 95;}
         if ($l < 5) {$l = 5;} elsif ($l > 95) {$l = 95;}
 	my $kml_color = "ff".hsl_to_bgr($h/360,$s/100,$l/100);
+	my $kml_fill = "55".hsl_to_bgr($h/360,$s/100,$l/100);  # CHANGE HERE FOR TRANSPARENCY
 	# Determine color
 	my $colornumber = $track;
 	while ($colornumber > 7) {
 		$colornumber = $colornumber - 8;
 	}
-	my $alt_zone_name = sprintf("%05d-%5d",$altitude_zone,($altitude_zone + $zone_altitude));
+	my $alt_zone_name = sprintf("%05d $altitudeunit{'out'} - %5d $altitudeunit{'out'}",$altitude_zone,($altitude_zone + $zone_altitude));
 	my $positionperzonecounter = sprintf("% 9d",$positionperzonecounter{$altitude_zone});
 	my $tracknumber = sprintf("% 2d",$track);
 	$newtrack = 1;
@@ -660,28 +699,41 @@ foreach my $altitude_zone (sort {$a<=>$b} keys %data) {
 	print $kml_filehandle "<Style id=\"track-$track\">
       <LineStyle>
         <color>$kml_color</color>
-        <width>2</width>
+        <width>3</width>
+      </LineStyle>
+    </Style>
+	<Style id=\"fill-$track\">
+      <LineStyle>
+        <color>000000</color>
+        <width>0</width>
       </LineStyle>
       <PolyStyle>
-        <color>$kml_color</color>
+        <color>$kml_fill</color>
       </PolyStyle>
     </Style>
     <Placemark>
-      <name>$track</name>
+      <name>Layer $track (outline)</name>
       <description>$alt_zone_name</description>
       <styleUrl>#track-$track</styleUrl>
       <LineString>
-        <altitudeMode>absolute</altitudeMode>
+        <altitudeMode>clampToGround</altitudeMode>
         <coordinates>\n" if ($outputdatafile =~ /kml$/i);
 	foreach my $direction_zone (sort {$a<=>$b} keys %{$data{$altitude_zone}}) {
 		my @row;
 		my @kml;
+		my $coords;
 		foreach my $header ("hex_ident","altitude","latitude","longitude","date","time","angle","distance") {
 			push(@row,$data{$altitude_zone}{$direction_zone}{$header});
 		}
+		$coords = "$data{$altitude_zone}{$direction_zone}{'longitude'},$data{$altitude_zone}{$direction_zone}{'latitude'},$data{$altitude_zone}{$direction_zone}{'altitude'}\n";
+		if ($firstloop) {
+			$firstrow = $coords;
+			$firstloop = 0;
+		}
 		$trackpoint++;
 		if ($outputdatafile =~ /kml$/i) {
-	  		print $kml_filehandle "$data{$altitude_zone}{$direction_zone}{'longitude'},$data{$altitude_zone}{$direction_zone}{'latitude'},$data{$altitude_zone}{$direction_zone}{'altitude'}\n";	
+	  		print $kml_filehandle $coords;
+	  		$coordslist .= $coords;
 		} else {
 			print $data_filehandle "T,$newtrack,Altitude zone $track: $alt_zone_name,$color[$colornumber],$trackpoint,$altitude_zone,$direction_zone,".join(",",@row)."\n";
 		}
@@ -690,8 +742,21 @@ foreach my $altitude_zone (sort {$a<=>$b} keys %data) {
 		$min_positions_per_direction = $positionperdirectioncounter{$altitude_zone}{$direction_zone} if ($positionperdirectioncounter{$altitude_zone}{$direction_zone} < $max_positions_per_direction);
 		$max_positions_per_direction = $positionperdirectioncounter{$altitude_zone}{$direction_zone} if ($positionperdirectioncounter{$altitude_zone}{$direction_zone} > $max_positions_per_direction);
 	}
-	print $kml_filehandle "</coordinates>
+	print $kml_filehandle "$firstrow		</coordinates>
       </LineString>
+    </Placemark>
+	<Placemark>
+	  <name>Layer $track (fill)</name>
+	  <description>$alt_zone_name</description>
+	  <styleUrl>#fill-$track</styleUrl>
+	  <Polygon>
+	    <altitudeMode>clampToGround</altitudeMode>
+	    <outerBoundaryIs>
+		  <LinearRing>
+		    <coordinates>$coordslist$firstrow		</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>	  
     </Placemark>\n"  if ($outputdatafile =~ /kml$/i);
 	my $real_number_of_directions = scalar keys %{$positionperdirectioncounter{$altitude_zone}};
 	my $avarage_positions_per_direction = sprintf("% 6d",($positionperzonecounter{$altitude_zone} / $number_of_directions));
@@ -702,4 +767,3 @@ foreach my $altitude_zone (sort {$a<=>$b} keys %data) {
 print $kml_filehandle "</Document>
 </kml>\n" if ($outputdatafile =~ /kml$/i);
 close $outputdatafile;
-

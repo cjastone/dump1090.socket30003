@@ -4,7 +4,7 @@ An updated version of the original [rangeview.pl](https://github.com/tedsluis/du
 
 Provides a visual representation of the range of your RDL-SDR and antenna for ADS-B traffic.
 
-rangeview.pl
+**rangeview.pl**
 * Reads the flight positions from files in CVS format as output by dump1090 and creates a range/altitude view map.
 * The range/altitude view shows the maximum range of your antenna for every altitude zone.
 * KML output support (Google Earth format).
@@ -255,10 +255,3 @@ The distance will be converted from 'kilometer' to 'kilometer.
 You can find the result in '/tmp/rangview.kml'.
 
 The ouput may be viewed using Google Earth or Google Maps.
-
-## More info
-
-* https://github.com/tedsluis/dump1090
-* https://www.youtube.com/watch?v=Qz4XSFRjLTI
-* http://discussions.flightaware.com/ads-b-flight-tracking-f21/heatmap-range-altitude-view-for-dump1090-mutability-v1-15-t35844.html
-* ted.sluis@gmail.com

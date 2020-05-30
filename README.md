@@ -11,26 +11,26 @@ Provides a visual representation of the range of your RDL-SDR and antenna for AD
 
 Corrections and enhancements over original script:
 * Corrects an issue with the original script that results in an error when run
+* Corrects an issue with inaccurate results oh the left-hand half of the map when multiple altitude zones
 * Draws a complete solid outline with internal translucent shading for better viewing in Google Earth
 * Provides time/date stamp and slightly more detailed data in layers
+* Automatically creates a CSV file in the same format as socket30003 output containing "high scores" for the specified number of direction zones
 
-[![Dump1090 rangeview](https://raw.githubusercontent.com/tedsluis/dump1090.socket30003/master/img/rangeview-example1.png)](https://raw.githubusercontent.com/tedsluis/dump1090.socket30003/master/img/rangeview-example1.png)
+[![Dump1090 rangeview](/images/rangemap.png)
 
 
 ## Help page rangeview.pl
 ````
 This rangeview.pl script creates location data
 for a range/altitude view which can be displayed in a modified
-fork of dump1090-mutability.
+fork of dump1090-mutability or Google Earth / Maps.
 
 The script creates two output files:
-rangeview.csv) A file with location data in csv format can be
+rangeview.csv) A file with location data in CSV format can be
 imported in to tools like http://www.gpsvisualizer.com.
-rangeview.kml) A file with location data in kml format, which
-can be imported into a modified dum1090-mutability.
-
-Please read this post for more info:
-http://discussions.flightaware.com/post180185.html#p180185
+rangeview.kml) A file with location data in KML format, which
+can be imported into a modified dum1090-mutability or Google
+Earth / Maps.
 
 This script uses the output file(s) of the 'socket30003.pl'
 script, which are by default stored in /tmp in this format:

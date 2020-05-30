@@ -208,16 +208,14 @@ if ($altitudeunit{'out'} =~ /feet/) {
 if ($help) {
 	print "\nThis $scriptname script creates location data 
 for a range/altitude view which can be displated in a modified 
-fork of dump1090-mutability.
+fork of dump1090-mutability or Google Earth / Maps.
 
 The script creates two output files:
-rangeview.csv) A file with location data in csv format can be 
+rangeview.csv) A file with location data in CSV format can be 
 imported in to tools like http://www.gpsvisualizer.com. 
-rangeview.kml) A file with location data in kml format, which
-can be imported into a modified dum1090-mutability.
-
-Please read this post for more info:
-http://discussions.flightaware.com/post180185.html#p180185
+rangeview.kml) A file with location data in KML format, which
+can be imported into a modified dum1090-mutability or Google
+Earth / Maps.
 
 This script uses the output file(s) of the 'socket30003.pl'
 script, which are by default stored in /tmp in this format:
@@ -436,7 +434,9 @@ if (!-w $outputdirectory) {
 # check file name extention
 if ($outputdatafile =~ /\.csv$|\.kml/i) {
 	# Set output file
+	$datestamp = strftime "%y%m%d-%H%M%S", localtime();
 	$outputdatafile = common->SetOutput($outputdirectory,$outputdatafile,$override,$timestamp,$sequencenumber);
+	$highscoredatafile = common->SetOutput($outputdirectory,"highscores-$datestamp.csv",$override,$timestamp,$sequencenumber);
 } else {
 	LOG("The output file name '$outputdatafile' is invalid! It should have a .kml or .csv extention!","E");
 	exit 1;
@@ -497,6 +497,10 @@ my $positioncounter=0;
 my %positionperzonecounter;
 my %positionperdirectioncounter;
 my $position;
+my @highscores;
+my $highscoreheader;
+my $highscore_filehandle;
+my $datestamp;
 # Read input files
 foreach my $filename (@files) {
 	LOG("processing '$filename':","I");
@@ -525,6 +529,7 @@ foreach my $filename (@files) {
 				@header = ();
 				my @unit;
 				# Header columns found!
+				$highscoreheader = $line;
 				my @tmp = split(/,/,$line);
 				foreach my $column (@tmp) {
 					if ($column =~ /^\s*([^\(]+)\(([^\)]+)\)\s*$/) {
@@ -572,23 +577,32 @@ foreach my $filename (@files) {
 		$positionperzonecounter{$altitude_zone}++;
 		$positionperdirectioncounter{$altitude_zone}{$direction_zone} = 0 if (! exists $positionperdirectioncounter{$altitude_zone}{$direction_zone});
 		$positionperdirectioncounter{$altitude_zone}{$direction_zone}++;
-		# Save position if it is the most fare away location for it's altitude zone and direction zoe:
+		# Save position if it is the most fare away location for it's altitude zone and direction zone:
 		if ((!exists $data{$altitude_zone}||(!exists $data{$altitude_zone}{$direction_zone})||($data{$altitude_zone}{$direction_zone}{'distance'} < $col[$hdr{'distance'}]))) {
 			$data{$altitude_zone}{$direction_zone}{'distance'}   = int($distance * 100) / 100;
-                        $data{$altitude_zone}{$direction_zone}{'hex_ident'}  = $col[$hdr{'hex_ident'}];
-                        $data{$altitude_zone}{$direction_zone}{'altitude'}   = int($altitude);
-                        $data{$altitude_zone}{$direction_zone}{'latitude'}   = $col[$hdr{'latitude'}];
-                        $data{$altitude_zone}{$direction_zone}{'longitude'}  = $col[$hdr{'longitude'}];
-                        $data{$altitude_zone}{$direction_zone}{'date'}       = $col[$hdr{'date'}];
-                        $data{$altitude_zone}{$direction_zone}{'time'}       = $col[$hdr{'time'}];
-                        $data{$altitude_zone}{$direction_zone}{'angle'}      = int($col[$hdr{'angle'}] * 100) / 100;
-
+			$data{$altitude_zone}{$direction_zone}{'hex_ident'}  = $col[$hdr{'hex_ident'}];
+			$data{$altitude_zone}{$direction_zone}{'altitude'}   = int($altitude);
+			$data{$altitude_zone}{$direction_zone}{'latitude'}   = $col[$hdr{'latitude'}];
+			$data{$altitude_zone}{$direction_zone}{'longitude'}  = $col[$hdr{'longitude'}];
+			$data{$altitude_zone}{$direction_zone}{'date'}       = $col[$hdr{'date'}];
+			$data{$altitude_zone}{$direction_zone}{'time'}       = $col[$hdr{'time'}];
+			$data{$altitude_zone}{$direction_zone}{'angle'}      = int($col[$hdr{'angle'}] * 100) / 100;
+			$highscores[$direction_zone - 1 + (180*($number_of_directions/360))] = $line;
 		}
 	}
 	close($data_filehandle);
 	$message .= "-".($linecounter-1).". processed.";
 	LOG($message,"I");
 }
+
+# Write high scores to same format csv file as input
+open($highscore_filehandle, '>',"$highscoredatafile") or die "Unable to open '$highscoredatafile'!\n";
+print $highscore_filehandle "$highscoreheader\n";
+foreach my $score (@highscores) {
+	print $highscore_filehandle "$score\n";
+}
+close $highscore_filehandle;
+
 LOG("Number of files read: $filecounter","I");
 LOG("Number of position processed: $position and positions within range processed: $positioncounter","I");
 #===============================================================================
@@ -624,7 +638,7 @@ sub hsl_to_bgr(@) {
 my @zone;
 foreach my $altitude_zone (sort {$a<=>$b} keys %data) {
 	foreach my $dz (0..$number_of_directions) {
-		$direction_zone = sprintf("% 4d",$dz);
+		$direction_zone = sprintf("% 4d", $dz + (-180 * ($number_of_directions / 360)));  # bug fixed here - now uses direction zone correctly 
 		foreach my $previous_altitude_zone (@zone) {
 			# Higher altitude zones reache atleast as far as the lower altitude zones.
 			if ((exists $data{$previous_altitude_zone}) && (exists $data{$previous_altitude_zone}{$direction_zone}) && 

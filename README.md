@@ -16,7 +16,7 @@ Corrections and enhancements over original script:
 * Provides time/date stamp and slightly more detailed data in layers
 * Automatically creates a CSV file in the same format as socket30003 output containing "high scores" for the specified number of direction zones
 
-[![Dump1090 rangeview](/images/rangemap.png)
+![Dump1090 rangeview](/images/rangemap.png)
 
 
 ## Help page rangeview.pl

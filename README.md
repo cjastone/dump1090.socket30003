@@ -5,13 +5,13 @@ An updated version of the original [rangeview.pl](https://github.com/tedsluis/du
 Provides a visual representation of the range of your RDL-SDR and antenna for ADS-B traffic.
 
 **rangeview.pl**
-* Reads the flight positions from files in CVS format as output by dump1090 and creates a range/altitude view map.
+* Reads the flight positions from files in CSV format as output by dump1090 and creates a range/altitude view map.
 * The range/altitude view shows the maximum range of your antenna for every altitude zone.
 * KML output support (Google Earth format).
 
 Corrections and enhancements over original script:
 * Corrects an issue with the original script that results in an error when run
-* Corrects an issue with inaccurate results oh the left-hand half of the map when multiple altitude zones
+* Corrects an issue with inaccurate results on the left-hand half of the map when separated into multiple altitude zones
 * Draws a complete solid outline with internal translucent shading for better viewing in Google Earth
 * Provides time/date stamp and slightly more detailed data in layers
 * Automatically creates a CSV file in the same format as socket30003 output containing "high scores" for the specified number of direction zones
@@ -29,7 +29,7 @@ The script creates two output files:
 rangeview.csv) A file with location data in CSV format can be
 imported in to tools like http://www.gpsvisualizer.com.
 rangeview.kml) A file with location data in KML format, which
-can be imported into a modified dum1090-mutability or Google
+can be imported into a modified dump1090-mutability or Google
 Earth / Maps.
 
 This script uses the output file(s) of the 'socket30003.pl'

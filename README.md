@@ -5,7 +5,7 @@ An updated version of the original [rangeview.pl](https://github.com/tedsluis/du
 Provides a visual representation of the range of your RDL-SDR and antenna for ADS-B traffic.
 
 **rangeview.pl**
-* Reads the flight positions from files in CSV format as output by dump1090 and creates a range/altitude view map.
+* Reads the flight positions from files in CSV format as output by socket30003 and creates a range/altitude view map.
 * The range/altitude view shows the maximum range of your antenna for every altitude zone.
 * KML output support (Google Earth format).
 
